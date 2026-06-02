@@ -12,10 +12,10 @@ jobs:
 
     steps:
     - name: Checkout Source Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Node.js Environment
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
 
@@ -23,7 +23,7 @@ jobs:
       run: npm install -g cordova
 
     - name: Set up Java Development Kit (JDK 11)
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
         java-version: '11'
@@ -34,7 +34,7 @@ jobs:
     - name: Create Cordova Project Platform
       run: cordova platform add android --save
 
-    - name: FORCE INSTALL CRITICAL HARDWARE PLUGINS
+    - name: Force Install Critical Hardware Plugins
       run: |
         cordova plugin add cordova-plugin-camera --save
         cordova plugin add cordova-plugin-network-information --save
@@ -45,7 +45,7 @@ jobs:
       run: cordova build android --release
 
     - name: Upload Finished App Installer Bundle
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: StockEntry-App
         path: platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk
