@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shri Ram Overseas – Stock Entry</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial;background:#f4f6f8;padding-bottom:40px;}
+.container{max-width:600px;margin:20px auto;background:#fff;padding:24px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+h2{color:#2d4a1a;text-align:center;margin-bottom:4px;font-size:22px;}
+h3{text-align:center;color:#888;font-weight:normal;font-size:14px;margin-bottom:16px;}
+.section{background:#f8f9fa;border-left:4px solid #2d4a1a;padding:10px 14px;margin-top:18px;margin-bottom:8px;border-radius:0 6px 6px 0;font-size:12px;font-weight:bold;color:#2d4a1a;text-transform:uppercase;letter-spacing:0.5px;}
+label{font-size:12px;color:#555;font-weight:bold;display:block;margin-top:12px;margin-bottom:4px;}
+input,select{width:100%;padding:10px;border:1.5px solid #ccc;border-radius:6px;font-size:15px;}
+input:focus,select:focus{border-color:#2d4a1a;outline:none;}
+.required{color:red;}
+.photo-box{border:2px dashed #c8952a;border-radius:10px;padding:20px;text-align:center;background:#fffdf7;margin-top:12px;}
+.photo-box h4{color:#6b4c2a;font-size:15px;margin-bottom:6px;}
+.photo-box p{color:#888;font-size:13px;margin-bottom:10px;}
+.upload-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.upload-btn{padding:9px 22px;border-radius:20px;border:1.5px solid;background:#fff;font-size:13px;font-weight:bold;cursor:pointer;}
+.upload-btn.camera{border-color:#2d4a1a;color:#2d4a1a;}
+.upload-btn.gallery{border-color:#6b4c2a;color:#6b4c2a;}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:8px;margin-top:12px;}
+.thumb{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;border:2px solid #ddd;}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.thumb .del{position:absolute;top:3px;right:3px;width:22px;height:22px;background:rgba(192,57,43,0.9);color:#fff;border:none;border-radius:50%;font-size:13px;cursor:pointer;line-height:22px;}
+.photo-count{font-size:12px;color:#888;text-align:right;margin-top:6px;}
+.submit-btn{width:100%;padding:14px;background:#2d4a1a;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;}
+.submit-btn:hover{background:#4a6c2f;}
+.submit-btn:disabled{background:#999;cursor:not-allowed;}
+.progress{display:none;text-align:center;margin-top:12px;color:#666;font-size:14px;padding:10px;background:#fff8e1;border-radius:8px;}
+.toast{display:none;margin-top:12px;padding:14px;border-radius:8px;text-align:center;font-size:14px;font-weight:bold;}
+.toast.success{background:#d4edda;color:#155724;border:1px solid #c3e6cb;}
+.toast.error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;}
+.toast.info{background:#e8f4fd;color:#1d6fa5;border:1px solid #bce0f6;}
+</style>
+<script src="cordova.js"></script>
+</head>
+<body>
+<div class="container">
+  <h2>🌾 Shri Ram Overseas</h2>
+  <h3>Rice Stock Entry Form</h3>
+
+  <div class="toast info" id="syncToast">🔄 Connection found! Uploading entries to Google Sheets...</div>
+
+  <div class="section">🌾 Rice Type Details</div>
+
+  <label>Rice Type</label>
+  <select id="riceType">
+    <option value="">Select Rice Type</option>
+    <option>Basmati</option>
+    <option>Non Basmati</option>
+    <option>Rice Bran</option>
+  </select>
+
+  <label>Rice Type 1</label>
+  <select id="riceType1">
+    <option value="">Select Type 1</option>
+    <option>1718</option><option>1121</option><option>1509</option>
+    <option>Sharbati</option><option>TAJ</option><option>1885</option>
+    <option>1847</option><option>PUSSA</option><option>1886</option>
+    <option>1401</option><option>Sugandha</option><option>PR106</option>
+    <option>IR64</option><option>Jeera Kasala</option><option>Fak</option>
+    <option>Polish</option><option>Fak Nakku</option>
+  </select>
+
+  <label>Rice Type 2</label>
+  <select id="riceType2">
+    <option value="">Select Type 2</option>
+    <option>G/S</option><option>W/S</option><option>L/S</option>
+    <option>STEAM</option><option>None</option>
+  </select>
+
+  <label>Rice Type 3</label>
+  <select id="riceType3">
+    <option value="">Select Type 3</option>
+    <option>Resort</option>
+    <option>Sizer</option>
+    <option>Rejection</option>
+    <option>None</option>
+  </select>
+
+  <label>Rice Type 4</label>
+  <select id="riceType4">
+    <option value="">Select Type 4</option>
+    <option>Wand</option><option>2nd Wand</option><option>Tibar</option>
+    <option>Super Tibar</option>
+    <option>Dubar</option><option>S. Mongra</option><option>Mongra</option>
+    <option>Nakku</option>
+    <option>Mix Broken</option>
+    <option>Broken</option>
+    <option>Rejection</option>
+    <option>None</option>
+  </select>
+
+  <div class="section">📋 Dara Details</div>
+
+  <label>Dara Status <span class="required">*</span></label>
+  <select id="daraStatus">
+    <option value="">Select Dara Status</option>
+    <option>Yes</option>
+    <option>No</option>
+  </select>
+
+  <div class="section">🏢 Party & Logistics</div>
+
+  <div id="partyNameDiv">
+    <label>Party Name <span class="required">*</span></label>
+    <input type="text" id="partyName" placeholder="Enter Party Name">
+  </div>
+
+  <label>Status <span class="required">*</span></label>
+  <select id="status">
+    <option value="">Select Status</option>
+    <option>In</option>
+    <option>Out</option>
+  </select>
+
+  <div id="stationDiv">
+    <label>Station <span class="required">*</span></label>
+    <input type="text" id="station" placeholder="e.g. Karnal, Delhi">
+  </div>
+
+  <div class="section">⚖️ Weight & Quantity</div>
+
+  <label>Weight (K.G) <span class="required">*</span></label>
+  <input type="number" id="weight" placeholder="e.g. 1000">
+
+  <label>Number of Bags <span class="required">*</span></label>
+  <input type="number" id="bags" placeholder="e.g. 20">
+
+  <div class="section">📍 Location</div>
+
+  <label>Location <span class="required">*</span></label>
+  <select id="location">
+    <option value="">Select Location</option>
+    <option>Lab Godown</option>
+    <option>Bardana Godown</option>
+    <option>Godown No.1</option>
+    <option>Sortex No. 4 (Hodi)</option>
+    <option>Sortex No. 5 (Hodi)</option>
+    <option>Sortex No. 4 (Plant)</option>
+    <option>Sortex No. 5 (Plant)</option>
+    <option>S.S Side (WH)</option>
+    <option>Shiv Shankar Side (WH)</option>
+    <option>Fak Godown</option>
+    <option>Polish Godown</option>
+    <option>Kanta Godown (WH)</option>
+  </select>
+
+  <div class="section">📷 Photos</div>
+
+  <div class="photo-box">
+    <h4>Upload Stock Photos</h4>
+    <p>Data goes safely into your phone's database. It auto-uploads when internet is active.</p>
+    <div class="upload-btns">
+      <button type="button" class="upload-btn camera" onclick="document.getElementById('cameraInput').click()">📷 Camera</button>
+      <button type="button" class="upload-btn gallery" onclick="document.getElementById('galleryInput').click()">🖼️ Gallery</button>
+    </div>
+  </div>
+
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" multiple style="display:none">
+  <input type="file" id="galleryInput" accept="image/*" multiple style="display:none">
+  <div class="preview-grid" id="previewGrid"></div>
+  <div class="photo-count" id="photoCount"></div>
+
+  <button class="submit-btn" id="submitBtn" onclick="submitForm()">💾 Save Stock Entry</button>
+  <div class="progress" id="progress">⏳ Writing data to your phone's local database...</div>
+</div>
+
+<script>
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzP3_zCAOr-hmpJodQxWndcDLOcZRy0mCR6zH3HxvbOlFOaEx2g1WGyts6kirXAIxPU/exec';
+  var IMGBB_KEY  = '00c76d0382411712f64b1165c52d06f1';
+  var photos     = [];
+  var isSyncing  = false;
+  var db;
+
+  // Initialize secure on-device IndexedDB database
+  var dbRequest = indexedDB.open("ShriRamDatabase", 1);
+  dbRequest.onupgradeneeded = function(e) {
+    db = e.target.result;
+    if(!db.objectStoreNames.contains("stock_entries")) {
+      db.createObjectStore("stock_entries", { keyPath: "id", autoIncrement: true });
+    }
+  };
+  dbRequest.onsuccess = function(e) { 
+    db = e.target.result; 
+    processQueue(); 
+  };
+
+  document.getElementById('daraStatus').addEventListener('change', function() {
+    if (this.value === 'No') {
+      document.getElementById('partyNameDiv').style.display = 'none';
+      document.getElementById('stationDiv').style.display   = 'none';
+      document.getElementById('partyName').value = '';
+      document.getElementById('station').value   = '';
+    } else {
+      document.getElementById('partyNameDiv').style.display = 'block';
+      document.getElementById('stationDiv').style.display   = 'block';
+    }
+  });
+
+  document.getElementById('cameraInput').addEventListener('change', function(){ handleFiles(this.files); this.value=''; });
+  document.getElementById('galleryInput').addEventListener('change', function(){ handleFiles(this.files); this.value=''; });
+
+  function handleFiles(files) {
+    Array.from(files).forEach(function(file) {
+      if (!file.type.startsWith('image/')) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        photos.push({ name: file.name, dataUrl: e.target.result });
+        renderPreviews();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderPreviews() {
+    var grid = document.getElementById('previewGrid');
+    grid.innerHTML = '';
+    photos.forEach(function(p, i) {
+      var d = document.createElement('div');
+      d.className = 'thumb';
+      d.innerHTML = '<img src="'+p.dataUrl+'"/><button class="del" onclick="removePhoto('+i+')">✕</button>';
+      grid.appendChild(d);
+    });
+    document.getElementById('photoCount').textContent = photos.length > 0 ? photos.length + ' photo(s) selected' : '';
+  }
+
+  function removePhoto(i) { photos.splice(i, 1); renderPreviews(); }
+  function getVal(id) { return document.getElementById(id).value.trim(); }
+
+  function resetForm() {
+    ['riceType','riceType1','riceType2','riceType3','riceType4','daraStatus','status','location'].forEach(function(id){ document.getElementById(id).value=''; });
+    ['partyName','station','weight','bags'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.getElementById('partyNameDiv').style.display = 'block';
+    document.getElementById('stationDiv').style.display   = 'block';
+    photos = [];
+    renderPreviews();
+  }
+
+  function uploadToImgBB(dataUrl) {
+    return new Promise(function(resolve, reject) {
+      var base64 = dataUrl.split(',')[1];
+      var formData = new FormData();
+      formData.append('key', IMGBB_KEY);
+      formData.append('image', base64);
+      fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData })
+      .then(function(res) { return res.json(); })
+      .then(function(json) { if (json.success) resolve(json.data.url); else reject(); })
+      .catch(reject);
+    });
+  }
+
+  // Gracefully minimize app to background without killing scripts
+  function closeAppGracefully() {
+    if (window.plugins && window.plugins.appMinimize) {
+      window.plugins.appMinimize.minimize(); 
+    } else if (navigator.app && navigator.app.exitApp) {
+      navigator.app.exitApp();
+    } else {
+      window.close();
+    }
+  }
+
+  function submitForm() {
+    var daraVal = getVal('daraStatus');
+    if (!daraVal) { alert('Please fill: Dara Status'); return; }
+    if (daraVal === 'Yes') {
+      if (!getVal('partyName')) { alert('Please fill: Party Name'); return; }
+      if (!getVal('station'))   { alert('Please fill: Station'); return; }
+    }
+    if (!getVal('status') || !getVal('weight') || !getVal('bags') || !getVal('location')) {
+      alert('Please complete all required fields.');
+      return;
+    }
+
+    document.getElementById('progress').style.display = 'block';
+
+    var stockRecord = {
+      riceType   : getVal('riceType'),
+      riceType1  : getVal('riceType1'),
+      riceType2  : getVal('riceType2'),
+      riceType3  : getVal('riceType3'),
+      riceType4  : getVal('riceType4'),
+      daraStatus : daraVal,
+      partyName  : getVal('partyName'),
+      status     : getVal('status'),
+      station    : getVal('station'),
+      weight     : getVal('weight'),
+      bags       : getVal('bags'),
+      location   : getVal('location'),
+      localPhotos: photos
+    };
+
+    // Save item locally in database store
+    var tx = db.transaction(["stock_entries"], "readwrite");
+    var store = tx.objectStore("stock_entries");
+    store.add(stockRecord).onsuccess = function() {
+      document.getElementById('progress').style.display = 'none';
+      alert('✅ Saved to Phone DB! The app will now minimize to the background and check for internet.');
+      resetForm();
+      
+      processQueue();
+      setTimeout(closeAppGracefully, 500);
+    };
+  }
+
+  // Auto-Sync background manager logic
+  function processQueue() {
+    if (isSyncing || !db) return;
+
+    // Halt logic if device has no active network link
+    if (!navigator.onLine) {
+      document.getElementById('syncToast').style.display = 'none';
+      return;
+    }
+
+    var tx = db.transaction(["stock_entries"], "readonly");
+    var store = tx.objectStore("stock_entries");
+    var cursorRequest = store.openCursor();
+
+    cursorRequest.onsuccess = function(e) {
+      var cursor = e.target.result;
+      if (!cursor) {
+        document.getElementById('syncToast').style.display = 'none';
+        return; 
+      }
+
+      isSyncing = true;
+      document.getElementById('syncToast').style.display = 'block';
+
+      var currentRecord = cursor.value;
+      var recordKey = currentRecord.id;
+
+      var uploadPromises = currentRecord.localPhotos.map(function(img) {
+        return uploadToImgBB(img.dataUrl);
+      });
+
+      Promise.all(uploadPromises)
+      .then(function(urls) {
+        var payload = Object.assign({}, currentRecord);
+        delete payload.localPhotos;
+        delete payload.id;
+
+        urls.forEach(function(url, idx) {
+          payload['photo' + (idx + 1)] = url;
+        });
+
+        return fetch(SCRIPT_URL, {
+          method  : 'POST',
+          mode    : 'no-cors',
+          headers : { 'Content-Type': 'text/plain' },
+          body    : JSON.stringify(payload)
+        });
+      })
+      .then(function() {
+        var writeTx = db.transaction(["stock_entries"], "readwrite");
+        var writeStore = writeTx.objectStore("stock_entries");
+        writeStore.delete(recordKey).onsuccess = function() {
+          isSyncing = false;
+          processQueue(); 
+        };
+      })
+      .catch(function() {
+        isSyncing = false;
+        document.getElementById('syncToast').style.display = 'none';
+      });
+    };
+  }
+
+  window.addEventListener('online', processQueue);
+  document.addEventListener('deviceready', function() {
+    if (window.cordova && cordova.plugins && cordova.plugins.backgroundMode) {
+      cordova.plugins.backgroundMode.enable();
+      cordova.plugins.backgroundMode.overrideBackButton();
+    }
+    processQueue();
+  }, false);
+
+  // Checks connectivity status every 12 seconds
+  setInterval(processQueue, 12000);
+</script>
+</body>
+</html>
