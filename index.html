@@ -175,7 +175,7 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
   var isSyncing  = false;
   var db;
 
-  // Initialize secure on-device IndexedDB database
+  // Setup secure on-device database structure
   var dbRequest = indexedDB.open("ShriRamDatabase", 1);
   dbRequest.onupgradeneeded = function(e) {
     db = e.target.result;
@@ -200,14 +200,14 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
     }
   });
 
-  // FIXED: Native Camera Capture Routine (Crash-proof)
+  // FIXED: Native Camera API call to bypass unstable browser file upload inputs
   function captureNativePhoto() {
     if (!navigator.camera) {
-      alert("Camera API plugin not loaded yet. Make sure Cordova is ready.");
+      alert("App is initializing permissions. Please wait a moment.");
       return;
     }
     navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
-      quality: 40, // Highly compressed to prevent RAM out-of-memory drops
+      quality: 35, // Balanced compression to manage Android operating system RAM
       destinationType: Camera.DestinationType.DATA_URL,
       sourceType: Camera.PictureSourceType.CAMERA,
       correctOrientation: true,
@@ -215,21 +215,20 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
     });
   }
 
-  // FIXED: Native Gallery Fetch Routine (Crash-proof)
+  // FIXED: Native Gallery fetch routine
   function captureNativeGallery() {
     if (!navigator.camera) {
-      alert("Gallery API plugin not loaded yet. Make sure Cordova is ready.");
+      alert("App is initializing permissions. Please wait a moment.");
       return;
     }
     navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
-      quality: 40,
+      quality: 35,
       destinationType: Camera.DestinationType.DATA_URL,
       sourceType: Camera.PictureSourceType.PHOTOLIBRARY,
       correctOrientation: true
     });
   }
 
-  // FIXED: Appends captured media into your active display array
   function onPhotoSuccess(base64Data) {
     var generatedUrl = "data:image/jpeg;base64," + base64Data;
     var pseudofilename = "img_" + Date.now() + ".jpg";
@@ -239,7 +238,7 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
   }
 
   function onPhotoFail(message) {
-    console.log("Media operation skipped/canceled: " + message);
+    console.log("Media input cancelled: " + message);
   }
 
   function renderPreviews() {
