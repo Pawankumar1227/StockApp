@@ -8,19 +8,28 @@
     
     <plugin name="cordova-plugin-camera" source="npm" />
     <plugin name="cordova-plugin-network-information" source="npm" />
-    
     <plugin name="cordova-plugin-background-mode" source="npm" />
     <plugin name="cordova-plugin-appminimize" source="npm" />
     
     <preference name="KeepRunning" value="true" />
     <preference name="AllowInlineMediaPlayback" value="true" />
+    <preference name="AndroidLaunchMode" value="singleTask" />
     
     <platform name="android">
+        <queries>
+            <intent>
+                <action android:name="android.media.action.IMAGE_CAPTURE" />
+            </intent>
+            <intent>
+                <action android:name="android.intent.action.GET_CONTENT" />
+            </intent>
+        </queries>
+
         <config-file parent="/*" target="AndroidManifest.xml">
             <uses-permission android:name="android.permission.CAMERA" />
             <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
             <uses-feature android:name="android.hardware.camera" android:required="false" />
             <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
         </config-file>
