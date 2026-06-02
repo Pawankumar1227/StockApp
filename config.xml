@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.shriram.stockentry" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Shri Ram Overseas</name>
+    <description>Offline Stock Entry Form with Auto-Sync</description>
+    <author email="support@shriram.com">Shri Ram Overseas</author>
+    
+    <content src="index.html" />
+    
+    <!-- Permissions for Camera, Gallery, and Internet status -->
+    <plugin name="cordova-plugin-camera" source="npm" />
+    <plugin name="cordova-plugin-network-information" source="npm" />
+    
+    <!-- CRITICAL PLUGINS FOR YOUR OFFLINE WORKFLOW -->
+    <plugin name="cordova-plugin-background-mode" source="npm" />
+    <plugin name="cordova-plugin-appminimize" source="npm" />
+    
+    <!-- Preferences to enforce background stability -->
+    <preference name="KeepRunning" value="true" />
+    <preference name="AllowInlineMediaPlayback" value="true" />
+</widget>
