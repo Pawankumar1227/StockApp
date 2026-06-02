@@ -175,7 +175,7 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
   var isSyncing  = false;
   var db;
 
-  // Setup secure on-device database structure
+  // Initialize secure on-device database structure
   var dbRequest = indexedDB.open("ShriRamDatabase", 1);
   dbRequest.onupgradeneeded = function(e) {
     db = e.target.result;
@@ -200,33 +200,43 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
     }
   });
 
-  // FIXED: Native Camera API call to bypass unstable browser file upload inputs
+  // CRASH PROTECTION: Checked execution structure
   function captureNativePhoto() {
-    if (!navigator.camera) {
-      alert("App is initializing permissions. Please wait a moment.");
+    if (typeof navigator.camera === "undefined" || !navigator.camera) {
+      alert("System Warning: Camera permissions are still loading. Please wait 3 seconds and try again.");
       return;
     }
-    navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
-      quality: 35, // Balanced compression to manage Android operating system RAM
-      destinationType: Camera.DestinationType.DATA_URL,
-      sourceType: Camera.PictureSourceType.CAMERA,
-      correctOrientation: true,
-      saveToPhotoAlbum: false
-    });
+    
+    try {
+      navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
+        quality: 30, // Highly compressed string array size to preserve system RAM
+        destinationType: Camera.DestinationType.DATA_URL,
+        sourceType: Camera.PictureSourceType.CAMERA,
+        correctOrientation: true,
+        saveToPhotoAlbum: false
+      });
+    } catch(err) {
+      alert("Hardware link error: " + err.message);
+    }
   }
 
-  // FIXED: Native Gallery fetch routine
+  // CRASH PROTECTION: Checked gallery structure
   function captureNativeGallery() {
-    if (!navigator.camera) {
-      alert("App is initializing permissions. Please wait a moment.");
+    if (typeof navigator.camera === "undefined" || !navigator.camera) {
+      alert("System Warning: Gallery components are still loading. Please wait 3 seconds and try again.");
       return;
     }
-    navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
-      quality: 35,
-      destinationType: Camera.DestinationType.DATA_URL,
-      sourceType: Camera.PictureSourceType.PHOTOLIBRARY,
-      correctOrientation: true
-    });
+
+    try {
+      navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
+        quality: 30,
+        destinationType: Camera.DestinationType.DATA_URL,
+        sourceType: Camera.PictureSourceType.PHOTOLIBRARY,
+        correctOrientation: true
+      });
+    } catch(err) {
+      alert("Gallery link error: " + err.message);
+    }
   }
 
   function onPhotoSuccess(base64Data) {
@@ -238,7 +248,7 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
   }
 
   function onPhotoFail(message) {
-    console.log("Media input cancelled: " + message);
+    console.log("Media action canceled: " + message);
   }
 
   function renderPreviews() {
