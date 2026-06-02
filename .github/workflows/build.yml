@@ -38,6 +38,7 @@ jobs:
           cordova platform add android
           cordova plugin add cordova-plugin-background-mode
           cordova plugin add cordova-plugin-appminimize
+          cordova plugin add cordova-plugin-camera
           cordova build android --no-telemetry
 
       - name: Upload Finished APK Asset
