@@ -1,415 +1,615 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shri Ram Overseas – Stock Entry</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial;background:#f4f6f8;padding-bottom:40px;}
-.container{max-width:600px;margin:20px auto;background:#fff;padding:24px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
-h2{color:#2d4a1a;text-align:center;margin-bottom:4px;font-size:22px;}
-h3{text-align:center;color:#888;font-weight:normal;font-size:14px;margin-bottom:16px;}
-.section{background:#f8f9fa;border-left:4px solid #2d4a1a;padding:10px 14px;margin-top:18px;margin-bottom:8px;border-radius:0 6px 6px 0;font-size:12px;font-weight:bold;color:#2d4a1a;text-transform:uppercase;letter-spacing:0.5px;}
-label{font-size:12px;color:#555;font-weight:bold;display:block;margin-top:12px;margin-bottom:4px;}
-input,select{width:100%;padding:10px;border:1.5px solid #ccc;border-radius:6px;font-size:15px;}
-input:focus,select:focus{border-color:#2d4a1a;outline:none;}
-.required{color:red;}
-.photo-box{border:2px dashed #c8952a;border-radius:10px;padding:20px;text-align:center;background:#fffdf7;margin-top:12px;}
-.photo-box h4{color:#6b4c2a;font-size:15px;margin-bottom:6px;}
-.photo-box p{color:#888;font-size:13px;margin-bottom:10px;}
-.upload-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
-.upload-btn {padding:9px 22px;border-radius:20px;border:1.5px solid;background:#fff;font-size:13px;font-weight:bold;cursor:pointer;}
-.upload-btn.camera{border-color:#2d4a1a;color:#2d4a1a;}
-.upload-btn.gallery{border-color:#6b4c2a;color:#6b4c2a;}
-.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:8px;margin-top:12px;}
-.thumb{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;border:2px solid #ddd;}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block;}
-.thumb .del{position:absolute;top:3px;right:3px;width:22px;height:22px;background:rgba(192,57,43,0.9);color:#fff;border:none;border-radius:50%;font-size:13px;cursor:pointer;line-height:22px;}
-.photo-count{font-size:12px;color:#888;text-align:right;margin-top:6px;}
-.submit-btn{width:100%;padding:14px;background:#2d4a1a;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;}
-.submit-btn:hover{background:#4a6c2f;}
-.submit-btn:disabled{background:#999;cursor:not-allowed;}
-.progress{display:none;text-align:center;margin-top:12px;color:#666;font-size:14px;padding:10px;background:#fff8e1;border-radius:8px;}
-.toast{display:none;margin-top:12px;padding:14px;border-radius:8px;text-align:center;font-size:14px;font-weight:bold;}
-.toast.success{background:#d4edda;color:#155724;border:1px solid #c3e6cb;}
-.toast.error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;}
-.toast.info{background:#e8f4fd;color:#1d6fa5;border:1px solid #bce0f6;}
-</style>
-<script src="cordova.js"></script>
-</head>
-<body>
-<div class="container">
-  <h2>🌾 Shri Ram Overseas</h2>
-  <h3>Rice Stock Entry Form</h3>
+import { useState, useEffect, useRef, useCallback } from "react";
 
-  <div class="toast info" id="syncToast">🔄 Connection found! Uploading entries to Google Sheets...</div>
+// ─── Constants ───────────────────────────────────────────────────────────────
+const SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbzP3_zCAOr-hmpJodQxWndcDLOcZRy0mCR6zH3HxvbOlFOaEx2g1WGyts6kirXAIxPU/exec";
+const IMGBB_KEY = "00c76d0382411712f64b1165c52d06f1";
+const DB_NAME = "ShriRamDatabase";
+const DB_VERSION = 1;
+const STORE_NAME = "stock_entries";
 
-  <div class="section">🌾 Rice Type Details</div>
+// ─── Types ───────────────────────────────────────────────────────────────────
+interface PhotoItem {
+  name: string;
+  dataUrl: string;
+}
 
-  <label>Rice Type</label>
-  <select id="riceType">
-    <option value="">Select Rice Type</option>
-    <option>Basmati</option>
-    <option>Non Basmati</option>
-    <option>Rice Bran</option>
-  </select>
+interface StockRecord {
+  id?: number;
+  riceType: string;
+  riceType1: string;
+  riceType2: string;
+  riceType3: string;
+  riceType4: string;
+  daraStatus: string;
+  partyName: string;
+  status: string;
+  station: string;
+  weight: string;
+  bags: string;
+  location: string;
+  localPhotos: PhotoItem[];
+}
 
-  <label>Rice Type 1</label>
-  <select id="riceType1">
-    <option value="">Select Type 1</option>
-    <option>1718</option><option>1121</option><option>1509</option>
-    <option>Sharbati</option><option>TAJ</option><option>1885</option>
-    <option>1847</option><option>PUSSA</option><option>1886</option>
-    <option>1401</option><option>Sugandha</option><option>PR106</option>
-    <option>IR64</option><option>Jeera Kasala</option><option>Fak</option>
-    <option>Polish</option><option>Fak Nakku</option>
-  </select>
-
-  <label>Rice Type 2</label>
-  <select id="riceType2">
-    <option value="">Select Type 2</option>
-    <option>G/S</option><option>W/S</option><option>L/S</option>
-    <option>STEAM</option><option>None</option>
-  </select>
-
-  <label>Rice Type 3</label>
-  <select id="riceType3">
-    <option value="">Select Type 3</option>
-    <option>Resort</option>
-    <option>Sizer</option>
-    <option>Rejection</option>
-    <option>None</option>
-  </select>
-
-  <label>Rice Type 4</label>
-  <select id="riceType4">
-    <option value="">Select Type 4</option>
-    <option>Wand</option><option>2nd Wand</option><option>Tibar</option>
-    <option>Super Tibar</option>
-    <option>Dubar</option><option>S. Mongra</option><option>Mongra</option>
-    <option>Nakku</option>
-    <option>Mix Broken</option>
-    <option>Broken</option>
-    <option>Rejection</option>
-    <option>None</option>
-  </select>
-
-  <div class="section">📋 Dara Details</div>
-
-  <label>Dara Status <span class="required">*</span></label>
-  <select id="daraStatus">
-    <option value="">Select Dara Status</option>
-    <option>Yes</option>
-    <option>No</option>
-  </select>
-
-  <div class="section">🏢 Party & Logistics</div>
-
-  <div id="partyNameDiv">
-    <label>Party Name <span class="required">*</span></label>
-    <input type="text" id="partyName" placeholder="Enter Party Name">
-  </div>
-
-  <label>Status <span class="required">*</span></label>
-  <select id="status">
-    <option value="">Select Status</option>
-    <option>In</option>
-    <option>Out</option>
-  </select>
-
-  <div id="stationDiv">
-    <label>Station <span class="required">*</span></label>
-    <input type="text" id="station" placeholder="e.g. Karnal, Delhi">
-  </div>
-
-  <div class="section">⚖️ Weight & Quantity</div>
-
-  <label>Weight (K.G) <span class="required">*</span></label>
-  <input type="number" id="weight" placeholder="e.g. 1000">
-
-  <label>Number of Bags <span class="required">*</span></label>
-  <input type="number" id="bags" placeholder="e.g. 20">
-
-  <div class="section">📍 Location</div>
-
-  <label>Location <span class="required">*</span></label>
-  <select id="location">
-    <option value="">Select Location</option>
-    <option>Lab Godown</option>
-    <option>Bardana Godown</option>
-    <option>Godown No.1</option>
-    <option>Sortex No. 4 (Hodi)</option>
-    <option>Sortex No. 5 (Hodi)</option>
-    <option>Sortex No. 4 (Plant)</option>
-    <option>Sortex No. 5 (Plant)</option>
-    <option>S.S Side (WH)</option>
-    <option>Shiv Shankar Side (WH)</option>
-    <option>Fak Godown</option>
-    <option>Polish Godown</option>
-    <option>Kanta Godown (WH)</option>
-  </select>
-
-  <div class="section">📷 Photos</div>
-
-  <div class="photo-box">
-    <h4>Upload Stock Photos</h4>
-    <p>Data goes safely into your phone's database. It auto-uploads when internet is active.</p>
-    <div class="upload-btns">
-      <button type="button" class="upload-btn camera" onclick="captureNativePhoto()">📷 Camera</button>
-      <button type="button" class="upload-btn gallery" onclick="captureNativeGallery()">🖼️ Gallery</button>
-    </div>
-  </div>
-
-  <div class="preview-grid" id="previewGrid"></div>
-  <div class="photo-count" id="photoCount"></div>
-
-  <button class="submit-btn" id="submitBtn" onclick="submitForm()">💾 Save Stock Entry</button>
-  <div class="progress" id="progress">⏳ Writing data to your phone's local database...</div>
-</div>
-
-<script>
-  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzP3_zCAOr-hmpJodQxWndcDLOcZRy0mCR6zH3HxvbOlFOaEx2g1WGyts6kirXAIxPU/exec';
-  var IMGBB_KEY  = '00c76d0382411712f64b1165c52d06f1';
-  var photos     = [];
-  var isSyncing  = false;
-  var db;
-
-  // Initialize secure on-device database structure
-  var dbRequest = indexedDB.open("ShriRamDatabase", 1);
-  dbRequest.onupgradeneeded = function(e) {
-    db = e.target.result;
-    if(!db.objectStoreNames.contains("stock_entries")) {
-      db.createObjectStore("stock_entries", { keyPath: "id", autoIncrement: true });
-    }
-  };
-  dbRequest.onsuccess = function(e) { 
-    db = e.target.result; 
-    processQueue(); 
-  };
-
-  document.getElementById('daraStatus').addEventListener('change', function() {
-    if (this.value === 'No') {
-      document.getElementById('partyNameDiv').style.display = 'none';
-      document.getElementById('stationDiv').style.display   = 'none';
-      document.getElementById('partyName').value = '';
-      document.getElementById('station').value   = '';
-    } else {
-      document.getElementById('partyNameDiv').style.display = 'block';
-      document.getElementById('stationDiv').style.display   = 'block';
-    }
-  });
-
-  // CRASH PROTECTION: Checked execution structure
-  function captureNativePhoto() {
-    if (typeof navigator.camera === "undefined" || !navigator.camera) {
-      alert("System Warning: Camera permissions are still loading. Please wait 3 seconds and try again.");
-      return;
-    }
-    
-    try {
-      navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
-        quality: 30, // Highly compressed string array size to preserve system RAM
-        destinationType: Camera.DestinationType.DATA_URL,
-        sourceType: Camera.PictureSourceType.CAMERA,
-        correctOrientation: true,
-        saveToPhotoAlbum: false
-      });
-    } catch(err) {
-      alert("Hardware link error: " + err.message);
-    }
-  }
-
-  // CRASH PROTECTION: Checked gallery structure
-  function captureNativeGallery() {
-    if (typeof navigator.camera === "undefined" || !navigator.camera) {
-      alert("System Warning: Gallery components are still loading. Please wait 3 seconds and try again.");
-      return;
-    }
-
-    try {
-      navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
-        quality: 30,
-        destinationType: Camera.DestinationType.DATA_URL,
-        sourceType: Camera.PictureSourceType.PHOTOLIBRARY,
-        correctOrientation: true
-      });
-    } catch(err) {
-      alert("Gallery link error: " + err.message);
-    }
-  }
-
-  function onPhotoSuccess(base64Data) {
-    var generatedUrl = "data:image/jpeg;base64," + base64Data;
-    var pseudofilename = "img_" + Date.now() + ".jpg";
-    
-    photos.push({ name: pseudofilename, dataUrl: generatedUrl });
-    renderPreviews();
-  }
-
-  function onPhotoFail(message) {
-    console.log("Media action canceled: " + message);
-  }
-
-  function renderPreviews() {
-    var grid = document.getElementById('previewGrid');
-    grid.innerHTML = '';
-    photos.forEach(function(p, i) {
-      var d = document.createElement('div');
-      d.className = 'thumb';
-      d.innerHTML = '<img src="'+p.dataUrl+'"/><button class="del" onclick="removePhoto('+i+')">✕</button>';
-      grid.appendChild(d);
-    });
-    document.getElementById('photoCount').textContent = photos.length > 0 ? photos.length + ' photo(s) selected' : '';
-  }
-
-  function removePhoto(i) { photos.splice(i, 1); renderPreviews(); }
-  function getVal(id) { return document.getElementById(id).value.trim(); }
-
-  function resetForm() {
-    ['riceType','riceType1','riceType2','riceType3','riceType4','daraStatus','status','location'].forEach(function(id){ document.getElementById(id).value=''; });
-    ['partyName','station','weight','bags'].forEach(function(id){ document.getElementById(id).value=''; });
-    document.getElementById('partyNameDiv').style.display = 'block';
-    document.getElementById('stationDiv').style.display   = 'block';
-    photos = [];
-    renderPreviews();
-  }
-
-  function uploadToImgBB(dataUrl) {
-    return new Promise(function(resolve, reject) {
-      var base64 = dataUrl.split(',')[1];
-      var formData = new FormData();
-      formData.append('key', IMGBB_KEY);
-      formData.append('image', base64);
-      fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData })
-      .then(function(res) { return res.json(); })
-      .then(function(json) { if (json.success) resolve(json.data.url); else reject(); })
-      .catch(reject);
-    });
-  }
-
-  function closeAppGracefully() {
-    if (window.plugins && window.plugins.appMinimize) {
-      window.plugins.appMinimize.minimize(); 
-    } else if (navigator.app && navigator.app.exitApp) {
-      navigator.app.exitApp();
-    } else {
-      window.close();
-    }
-  }
-
-  function submitForm() {
-    var daraVal = getVal('daraStatus');
-    if (!daraVal) { alert('Please fill: Dara Status'); return; }
-    if (daraVal === 'Yes') {
-      if (!getVal('partyName')) { alert('Please fill: Party Name'); return; }
-      if (!getVal('station'))   { alert('Please fill: Station'); return; }
-    }
-    if (!getVal('status') || !getVal('weight') || !getVal('bags') || !getVal('location')) {
-      alert('Please complete all required fields.');
-      return;
-    }
-
-    document.getElementById('progress').style.display = 'block';
-
-    var stockRecord = {
-      riceType   : getVal('riceType'),
-      riceType1  : getVal('riceType1'),
-      riceType2  : getVal('riceType2'),
-      riceType3  : getVal('riceType3'),
-      riceType4  : getVal('riceType4'),
-      daraStatus : daraVal,
-      partyName  : getVal('partyName'),
-      status     : getVal('status'),
-      station    : getVal('station'),
-      weight     : getVal('weight'),
-      bags       : getVal('bags'),
-      location   : getVal('location'),
-      localPhotos: photos
-    };
-
-    var tx = db.transaction(["stock_entries"], "readwrite");
-    var store = tx.objectStore("stock_entries");
-    store.add(stockRecord).onsuccess = function() {
-      document.getElementById('progress').style.display = 'none';
-      alert('✅ Saved to Phone DB! The app will now minimize to the background and check for internet.');
-      resetForm();
-      
-      processQueue();
-      setTimeout(closeAppGracefully, 500);
-    };
-  }
-
-  function processQueue() {
-    if (isSyncing || !db) return;
-    if (!navigator.onLine) {
-      document.getElementById('syncToast').style.display = 'none';
-      return;
-    }
-
-    var tx = db.transaction(["stock_entries"], "readonly");
-    var store = tx.objectStore("stock_entries");
-    var cursorRequest = store.openCursor();
-
-    cursorRequest.onsuccess = function(e) {
-      var cursor = e.target.result;
-      if (!cursor) {
-        document.getElementById('syncToast').style.display = 'none';
-        return; 
+// ─── IndexedDB helpers ───────────────────────────────────────────────────────
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = (e.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
       }
-
-      isSyncing = true;
-      document.getElementById('syncToast').style.display = 'block';
-
-      var currentRecord = cursor.value;
-      var recordKey = currentRecord.id;
-
-      var uploadPromises = currentRecord.localPhotos.map(function(img) {
-        return uploadToImgBB(img.dataUrl);
-      });
-
-      Promise.all(uploadPromises)
-      .then(function(urls) {
-        var payload = Object.assign({}, currentRecord);
-        delete payload.localPhotos;
-        delete payload.id;
-
-        urls.forEach(function(url, idx) {
-          payload['photo' + (idx + 1)] = url;
-        });
-
-        return fetch(SCRIPT_URL, {
-          method  : 'POST',
-          mode    : 'no-cors',
-          headers : { 'Content-Type': 'text/plain' },
-          body    : JSON.stringify(payload)
-        });
-      })
-      .then(function() {
-        var writeTx = db.transaction(["stock_entries"], "readwrite");
-        var writeStore = writeTx.objectStore("stock_entries");
-        writeStore.delete(recordKey).onsuccess = function() {
-          isSyncing = false;
-          processQueue(); 
-        };
-      })
-      .catch(function() {
-        isSyncing = false;
-        document.getElementById('syncToast').style.display = 'none';
-      });
     };
-  }
+    req.onsuccess = (e) => resolve((e.target as IDBOpenDBRequest).result);
+    req.onerror = () => reject(req.error);
+  });
+}
 
-  window.addEventListener('online', processQueue);
-  document.addEventListener('deviceready', function() {
-    if (window.cordova && cordova.plugins && cordova.plugins.backgroundMode) {
-      cordova.plugins.backgroundMode.enable();
-      cordova.plugins.backgroundMode.overrideBackButton();
+function addRecord(db: IDBDatabase, record: StockRecord): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([STORE_NAME], "readwrite");
+    tx.objectStore(STORE_NAME).add(record).onsuccess = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function deleteRecord(db: IDBDatabase, key: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([STORE_NAME], "readwrite");
+    tx.objectStore(STORE_NAME).delete(key).onsuccess = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function getFirstRecord(db: IDBDatabase): Promise<StockRecord | null> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([STORE_NAME], "readonly");
+    const req = tx.objectStore(STORE_NAME).openCursor();
+    req.onsuccess = (e) => {
+      const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>).result;
+      resolve(cursor ? cursor.value : null);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ─── ImgBB upload ────────────────────────────────────────────────────────────
+async function uploadToImgBB(dataUrl: string): Promise<string> {
+  const base64 = dataUrl.split(",")[1];
+  const form = new FormData();
+  form.append("key", IMGBB_KEY);
+  form.append("image", base64);
+  const res = await fetch("https://api.imgbb.com/1/upload", {
+    method: "POST",
+    body: form,
+  });
+  const json = await res.json();
+  if (json.success) return json.data.url as string;
+  throw new Error("ImgBB upload failed");
+}
+
+// ─── Section Header ──────────────────────────────────────────────────────────
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 mt-6 mb-3 bg-green-50 border-l-4 border-green-800 px-4 py-2 rounded-r-lg">
+      <span className="text-xs font-bold uppercase tracking-widest text-green-800">
+        {children}
+      </span>
+    </div>
+  );
+}
+
+// ─── Form Field ──────────────────────────────────────────────────────────────
+function FieldLabel({
+  children,
+  required,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <label className="block text-xs font-bold text-gray-600 mt-4 mb-1">
+      {children}
+      {required && <span className="text-red-500 ml-1">*</span>}
+    </label>
+  );
+}
+
+const inputClass =
+  "w-full px-3 py-2.5 border-[1.5px] border-gray-300 rounded-lg text-sm focus:border-green-800 focus:outline-none transition-colors bg-white";
+
+// ─── Main App ────────────────────────────────────────────────────────────────
+export default function App() {
+  const [riceType, setRiceType] = useState("");
+  const [riceType1, setRiceType1] = useState("");
+  const [riceType2, setRiceType2] = useState("");
+  const [riceType3, setRiceType3] = useState("");
+  const [riceType4, setRiceType4] = useState("");
+  const [daraStatus, setDaraStatus] = useState("");
+  const [partyName, setPartyName] = useState("");
+  const [status, setStatus] = useState("");
+  const [station, setStation] = useState("");
+  const [weight, setWeight] = useState("");
+  const [bags, setBags] = useState("");
+  const [location, setLocation] = useState("");
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [showSyncToast, setShowSyncToast] = useState(false);
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | "info" | null;
+    msg: string;
+  }>({ type: null, msg: "" });
+  const [saving, setSaving] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+
+  const dbRef = useRef<IDBDatabase | null>(null);
+  const isSyncingRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  // Show toast helper
+  const showToast = (type: "success" | "error" | "info", msg: string) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast({ type: null, msg: "" }), 4000);
+  };
+
+  // ── processQueue ─────────────────────────────────────────────────
+  const processQueue = useCallback(async () => {
+    const db = dbRef.current;
+    if (isSyncingRef.current || !db) return;
+    if (!navigator.onLine) {
+      setShowSyncToast(false);
+      return;
     }
-    processQueue();
-  }, false);
 
-  setInterval(processQueue, 12000);
-</script>
-</body>
-</html>
+    const record = await getFirstRecord(db);
+    if (!record) {
+      setShowSyncToast(false);
+      return;
+    }
+
+    isSyncingRef.current = true;
+    setSyncing(true);
+    setShowSyncToast(true);
+
+    try {
+      const urls = await Promise.all(
+        record.localPhotos.map((img) => uploadToImgBB(img.dataUrl))
+      );
+
+      const payload: Record<string, string> = {
+        riceType: record.riceType,
+        riceType1: record.riceType1,
+        riceType2: record.riceType2,
+        riceType3: record.riceType3,
+        riceType4: record.riceType4,
+        daraStatus: record.daraStatus,
+        partyName: record.partyName,
+        status: record.status,
+        station: record.station,
+        weight: record.weight,
+        bags: record.bags,
+        location: record.location,
+      };
+      urls.forEach((url, i) => {
+        payload[`photo${i + 1}`] = url;
+      });
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload),
+      });
+
+      await deleteRecord(db, record.id!);
+      isSyncingRef.current = false;
+      setSyncing(false);
+      // chain next
+      processQueue();
+    } catch {
+      isSyncingRef.current = false;
+      setSyncing(false);
+      setShowSyncToast(false);
+    }
+  }, []);
+
+  // ── Init DB ──────────────────────────────────────────────────────
+  useEffect(() => {
+    openDB().then((db) => {
+      dbRef.current = db;
+      processQueue();
+    });
+
+    const handleOnline = () => processQueue();
+    window.addEventListener("online", handleOnline);
+    const interval = setInterval(processQueue, 12000);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      clearInterval(interval);
+    };
+  }, [processQueue]);
+
+  // ── Count pending entries in DB (for badge) ──────────────────────
+  useEffect(() => {
+    const countPending = async () => {
+      if (!dbRef.current) return;
+      const tx = dbRef.current.transaction([STORE_NAME], "readonly");
+      const req = tx.objectStore(STORE_NAME).count();
+      req.onsuccess = () => setSavedCount(req.result);
+    };
+    const iv = setInterval(countPending, 3000);
+    return () => clearInterval(iv);
+  }, []);
+
+  // ── Photo handlers (web file input) ─────────────────────────────
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setPhotos((prev) => [
+          ...prev,
+          { name: file.name, dataUrl },
+        ]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const removePhoto = (i: number) =>
+    setPhotos((prev) => prev.filter((_, idx) => idx !== i));
+
+  // ── Reset form ───────────────────────────────────────────────────
+  const resetForm = () => {
+    setRiceType("");
+    setRiceType1("");
+    setRiceType2("");
+    setRiceType3("");
+    setRiceType4("");
+    setDaraStatus("");
+    setPartyName("");
+    setStatus("");
+    setStation("");
+    setWeight("");
+    setBags("");
+    setLocation("");
+    setPhotos([]);
+  };
+
+  // ── Submit ───────────────────────────────────────────────────────
+  const submitForm = async () => {
+    if (!daraStatus) { showToast("error", "Please fill: Dara Status"); return; }
+    if (daraStatus === "Yes") {
+      if (!partyName.trim()) { showToast("error", "Please fill: Party Name"); return; }
+      if (!station.trim()) { showToast("error", "Please fill: Station"); return; }
+    }
+    if (!status || !weight.trim() || !bags.trim() || !location) {
+      showToast("error", "Please complete all required fields.");
+      return;
+    }
+
+    setSaving(true);
+    const record: StockRecord = {
+      riceType,
+      riceType1,
+      riceType2,
+      riceType3,
+      riceType4,
+      daraStatus,
+      partyName,
+      status,
+      station,
+      weight,
+      bags,
+      location,
+      localPhotos: photos,
+    };
+
+    try {
+      await addRecord(dbRef.current!, record);
+      setSaving(false);
+      showToast(
+        "success",
+        "✅ Entry saved to phone database! Will auto-upload when online."
+      );
+      resetForm();
+      setSavedCount((c) => c + 1);
+      processQueue();
+    } catch {
+      setSaving(false);
+      showToast("error", "❌ Failed to save. Please try again.");
+    }
+  };
+
+  const showPartyStation = daraStatus !== "No";
+
+  // ─────────────────────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-gray-100 pb-12 font-sans">
+      {/* Header */}
+      <div className="bg-green-900 text-white px-4 py-5 text-center shadow-lg">
+        <h1 className="text-xl font-bold tracking-wide">🌾 Shri Ram Overseas</h1>
+        <p className="text-green-200 text-sm mt-0.5">Rice Stock Entry Form</p>
+        {savedCount > 0 && (
+          <div className="mt-2 inline-flex items-center gap-1.5 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-yellow-700 animate-pulse inline-block" />
+            {savedCount} pending upload{savedCount > 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
+
+      {/* Sync Toast */}
+      {showSyncToast && (
+        <div className="mx-4 mt-3 flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800 text-sm font-medium px-4 py-3 rounded-lg shadow-sm">
+          <span className="animate-spin text-base">🔄</span>
+          Connection found! Uploading entries to Google Sheets…
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {toast.type && (
+        <div
+          className={`mx-4 mt-3 px-4 py-3 rounded-lg text-sm font-bold shadow-sm text-center ${
+            toast.type === "success"
+              ? "bg-green-100 border border-green-300 text-green-800"
+              : toast.type === "error"
+              ? "bg-red-100 border border-red-300 text-red-800"
+              : "bg-blue-50 border border-blue-200 text-blue-800"
+          }`}
+        >
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Form Card */}
+      <div className="max-w-xl mx-auto mt-4 bg-white rounded-2xl shadow-md px-5 pb-6">
+        {/* ── Rice Type Details ── */}
+        <SectionHeader>🌾 Rice Type Details</SectionHeader>
+
+        <FieldLabel>Rice Type</FieldLabel>
+        <select className={inputClass} value={riceType} onChange={(e) => setRiceType(e.target.value)}>
+          <option value="">Select Rice Type</option>
+          <option>Basmati</option>
+          <option>Non Basmati</option>
+          <option>Rice Bran</option>
+        </select>
+
+        <FieldLabel>Rice Type 1</FieldLabel>
+        <select className={inputClass} value={riceType1} onChange={(e) => setRiceType1(e.target.value)}>
+          <option value="">Select Type 1</option>
+          {["1718","1121","1509","Sharbati","TAJ","1885","1847","PUSSA","1886","1401","Sugandha","PR106","IR64","Jeera Kasala","Fak","Polish","Fak Nakku"].map((o) => (
+            <option key={o}>{o}</option>
+          ))}
+        </select>
+
+        <FieldLabel>Rice Type 2</FieldLabel>
+        <select className={inputClass} value={riceType2} onChange={(e) => setRiceType2(e.target.value)}>
+          <option value="">Select Type 2</option>
+          {["G/S","W/S","L/S","STEAM","None"].map((o) => (
+            <option key={o}>{o}</option>
+          ))}
+        </select>
+
+        <FieldLabel>Rice Type 3</FieldLabel>
+        <select className={inputClass} value={riceType3} onChange={(e) => setRiceType3(e.target.value)}>
+          <option value="">Select Type 3</option>
+          {["Resort","Sizer","Rejection","None"].map((o) => (
+            <option key={o}>{o}</option>
+          ))}
+        </select>
+
+        <FieldLabel>Rice Type 4</FieldLabel>
+        <select className={inputClass} value={riceType4} onChange={(e) => setRiceType4(e.target.value)}>
+          <option value="">Select Type 4</option>
+          {["Wand","2nd Wand","Tibar","Super Tibar","Dubar","S. Mongra","Mongra","Nakku","Mix Broken","Broken","Rejection","None"].map((o) => (
+            <option key={o}>{o}</option>
+          ))}
+        </select>
+
+        {/* ── Dara Details ── */}
+        <SectionHeader>📋 Dara Details</SectionHeader>
+
+        <FieldLabel required>Dara Status</FieldLabel>
+        <select
+          className={inputClass}
+          value={daraStatus}
+          onChange={(e) => {
+            setDaraStatus(e.target.value);
+            if (e.target.value === "No") {
+              setPartyName("");
+              setStation("");
+            }
+          }}
+        >
+          <option value="">Select Dara Status</option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+
+        {/* ── Party & Logistics ── */}
+        <SectionHeader>🏢 Party &amp; Logistics</SectionHeader>
+
+        {showPartyStation && (
+          <>
+            <FieldLabel required>Party Name</FieldLabel>
+            <input
+              type="text"
+              className={inputClass}
+              placeholder="Enter Party Name"
+              value={partyName}
+              onChange={(e) => setPartyName(e.target.value)}
+            />
+          </>
+        )}
+
+        <FieldLabel required>Status</FieldLabel>
+        <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">Select Status</option>
+          <option>In</option>
+          <option>Out</option>
+        </select>
+
+        {showPartyStation && (
+          <>
+            <FieldLabel required>Station</FieldLabel>
+            <input
+              type="text"
+              className={inputClass}
+              placeholder="e.g. Karnal, Delhi"
+              value={station}
+              onChange={(e) => setStation(e.target.value)}
+            />
+          </>
+        )}
+
+        {/* ── Weight & Quantity ── */}
+        <SectionHeader>⚖️ Weight &amp; Quantity</SectionHeader>
+
+        <FieldLabel required>Weight (K.G)</FieldLabel>
+        <input
+          type="number"
+          className={inputClass}
+          placeholder="e.g. 1000"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+        />
+
+        <FieldLabel required>Number of Bags</FieldLabel>
+        <input
+          type="number"
+          className={inputClass}
+          placeholder="e.g. 20"
+          value={bags}
+          onChange={(e) => setBags(e.target.value)}
+        />
+
+        {/* ── Location ── */}
+        <SectionHeader>📍 Location</SectionHeader>
+
+        <FieldLabel required>Location</FieldLabel>
+        <select className={inputClass} value={location} onChange={(e) => setLocation(e.target.value)}>
+          <option value="">Select Location</option>
+          {[
+            "Lab Godown","Bardana Godown","Godown No.1",
+            "Sortex No. 4 (Hodi)","Sortex No. 5 (Hodi)",
+            "Sortex No. 4 (Plant)","Sortex No. 5 (Plant)",
+            "S.S Side (WH)","Shiv Shankar Side (WH)",
+            "Fak Godown","Polish Godown","Kanta Godown (WH)",
+          ].map((o) => (
+            <option key={o}>{o}</option>
+          ))}
+        </select>
+
+        {/* ── Photos ── */}
+        <SectionHeader>📷 Photos</SectionHeader>
+
+        <div className="border-2 border-dashed border-yellow-500 rounded-xl bg-yellow-50 p-5 text-center mt-1">
+          <h4 className="text-sm font-bold text-yellow-800 mb-1">Upload Stock Photos</h4>
+          <p className="text-xs text-gray-500 mb-4">
+            Data is saved locally on your device and auto-uploads when internet is active.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <button
+              type="button"
+              className="px-5 py-2 rounded-full border-[1.5px] border-green-800 text-green-800 bg-white text-sm font-bold hover:bg-green-50 transition-colors"
+              onClick={() => {
+                if (fileInputRef.current) {
+                  fileInputRef.current.setAttribute("capture", "environment");
+                  fileInputRef.current.click();
+                }
+              }}
+            >
+              📷 Camera
+            </button>
+            <button
+              type="button"
+              className="px-5 py-2 rounded-full border-[1.5px] border-yellow-700 text-yellow-800 bg-white text-sm font-bold hover:bg-yellow-50 transition-colors"
+              onClick={() => {
+                if (galleryInputRef.current) {
+                  galleryInputRef.current.removeAttribute("capture");
+                  galleryInputRef.current.click();
+                }
+              }}
+            >
+              🖼️ Gallery
+            </button>
+          </div>
+          {/* Hidden file inputs */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleFileChange}
+          />
+        </div>
+
+        {/* Photo previews */}
+        {photos.length > 0 && (
+          <>
+            <div className="grid grid-cols-4 gap-2 mt-3">
+              {photos.map((p, i) => (
+                <div
+                  key={i}
+                  className="relative rounded-lg overflow-hidden aspect-square border-2 border-gray-200"
+                >
+                  <img
+                    src={p.dataUrl}
+                    alt={p.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={() => removePhoto(i)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="text-right text-xs text-gray-500 mt-1">
+              {photos.length} photo{photos.length > 1 ? "s" : ""} selected
+            </p>
+          </>
+        )}
+
+        {/* Submit */}
+        <button
+          onClick={submitForm}
+          disabled={saving || syncing}
+          className="w-full mt-6 py-3.5 bg-green-900 hover:bg-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold text-base rounded-xl transition-colors shadow-md"
+        >
+          {saving ? "⏳ Saving to device…" : "💾 Save Stock Entry"}
+        </button>
+
+        {saving && (
+          <div className="mt-3 text-center text-sm text-gray-600 bg-yellow-50 border border-yellow-200 rounded-lg py-2 px-3">
+            ⏳ Writing data to your phone's local database…
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <p className="text-center text-xs text-gray-400 mt-6">
+        Shri Ram Overseas · Offline-First Stock Management
+      </p>
+    </div>
+  );
+}
