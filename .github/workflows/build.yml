@@ -1,0 +1,47 @@
+name: Build Android APK
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Cordova Globally
+        run: npm install -g cordova
+
+      - name: Create Cordova Workspace Structure
+        run: |
+          cordova create build_dir com.shriram.stockentry "Shri Ram Overseas"
+          rm -rf build_dir/www/*
+          cp index.html build_dir/www/
+          cp config.xml build_dir/
+
+      - name: Set up Java Development Kit (JDK)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK Environment
+        uses: android-actions/setup-android@v3
+
+      - name: Compile the Android Package (.apk)
+        run: |
+          cd build_dir
+          cordova platform add android
+          cordova plugin add cordova-plugin-background-mode
+          cordova plugin add cordova-plugin-appminimize
+          cordova build android --no-telemetry
+
+      - name: Upload Finished APK Asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: StockEntry-App
+          path: build_dir/platforms/android/app/build/outputs/apk/debug/app-debug.apk
