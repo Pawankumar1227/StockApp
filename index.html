@@ -19,7 +19,7 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
 .photo-box h4{color:#6b4c2a;font-size:15px;margin-bottom:6px;}
 .photo-box p{color:#888;font-size:13px;margin-bottom:10px;}
 .upload-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
-.upload-btn{padding:9px 22px;border-radius:20px;border:1.5px solid;background:#fff;font-size:13px;font-weight:bold;cursor:pointer;}
+.upload-btn {padding:9px 22px;border-radius:20px;border:1.5px solid;background:#fff;font-size:13px;font-weight:bold;cursor:pointer;}
 .upload-btn.camera{border-color:#2d4a1a;color:#2d4a1a;}
 .upload-btn.gallery{border-color:#6b4c2a;color:#6b4c2a;}
 .preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:8px;margin-top:12px;}
@@ -156,13 +156,11 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
     <h4>Upload Stock Photos</h4>
     <p>Data goes safely into your phone's database. It auto-uploads when internet is active.</p>
     <div class="upload-btns">
-      <button type="button" class="upload-btn camera" onclick="document.getElementById('cameraInput').click()">📷 Camera</button>
-      <button type="button" class="upload-btn gallery" onclick="document.getElementById('galleryInput').click()">🖼️ Gallery</button>
+      <button type="button" class="upload-btn camera" onclick="captureNativePhoto()">📷 Camera</button>
+      <button type="button" class="upload-btn gallery" onclick="captureNativeGallery()">🖼️ Gallery</button>
     </div>
   </div>
 
-  <input type="file" id="cameraInput" accept="image/*" capture="environment" multiple style="display:none">
-  <input type="file" id="galleryInput" accept="image/*" multiple style="display:none">
   <div class="preview-grid" id="previewGrid"></div>
   <div class="photo-count" id="photoCount"></div>
 
@@ -202,19 +200,46 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
     }
   });
 
-  document.getElementById('cameraInput').addEventListener('change', function(){ handleFiles(this.files); this.value=''; });
-  document.getElementById('galleryInput').addEventListener('change', function(){ handleFiles(this.files); this.value=''; });
-
-  function handleFiles(files) {
-    Array.from(files).forEach(function(file) {
-      if (!file.type.startsWith('image/')) return;
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        photos.push({ name: file.name, dataUrl: e.target.result });
-        renderPreviews();
-      };
-      reader.readAsDataURL(file);
+  // FIXED: Native Camera Capture Routine (Crash-proof)
+  function captureNativePhoto() {
+    if (!navigator.camera) {
+      alert("Camera API plugin not loaded yet. Make sure Cordova is ready.");
+      return;
+    }
+    navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
+      quality: 40, // Highly compressed to prevent RAM out-of-memory drops
+      destinationType: Camera.DestinationType.DATA_URL,
+      sourceType: Camera.PictureSourceType.CAMERA,
+      correctOrientation: true,
+      saveToPhotoAlbum: false
     });
+  }
+
+  // FIXED: Native Gallery Fetch Routine (Crash-proof)
+  function captureNativeGallery() {
+    if (!navigator.camera) {
+      alert("Gallery API plugin not loaded yet. Make sure Cordova is ready.");
+      return;
+    }
+    navigator.camera.getPicture(onPhotoSuccess, onPhotoFail, {
+      quality: 40,
+      destinationType: Camera.DestinationType.DATA_URL,
+      sourceType: Camera.PictureSourceType.PHOTOLIBRARY,
+      correctOrientation: true
+    });
+  }
+
+  // FIXED: Appends captured media into your active display array
+  function onPhotoSuccess(base64Data) {
+    var generatedUrl = "data:image/jpeg;base64," + base64Data;
+    var pseudofilename = "img_" + Date.now() + ".jpg";
+    
+    photos.push({ name: pseudofilename, dataUrl: generatedUrl });
+    renderPreviews();
+  }
+
+  function onPhotoFail(message) {
+    console.log("Media operation skipped/canceled: " + message);
   }
 
   function renderPreviews() {
@@ -254,7 +279,6 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
     });
   }
 
-  // Gracefully minimize app to background without killing scripts
   function closeAppGracefully() {
     if (window.plugins && window.plugins.appMinimize) {
       window.plugins.appMinimize.minimize(); 
@@ -295,7 +319,6 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
       localPhotos: photos
     };
 
-    // Save item locally in database store
     var tx = db.transaction(["stock_entries"], "readwrite");
     var store = tx.objectStore("stock_entries");
     store.add(stockRecord).onsuccess = function() {
@@ -308,11 +331,8 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
     };
   }
 
-  // Auto-Sync background manager logic
   function processQueue() {
     if (isSyncing || !db) return;
-
-    // Halt logic if device has no active network link
     if (!navigator.onLine) {
       document.getElementById('syncToast').style.display = 'none';
       return;
@@ -380,7 +400,6 @@ input:focus,select:focus{border-color:#2d4a1a;outline:none;}
     processQueue();
   }, false);
 
-  // Checks connectivity status every 12 seconds
   setInterval(processQueue, 12000);
 </script>
 </body>
