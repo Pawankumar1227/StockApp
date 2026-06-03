@@ -14,35 +14,30 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
+    - name: Set up Java JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 18
-
-    - name: Set up Java JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '11'
+        node-version: '20'
 
     - name: Install Cordova CLI
       run: npm install -g cordova
 
-    - name: Configure Android SDK Platform Tools
-      uses: subosito/flutter-action@v2
-      with:
-        channel: 'stable'
-
-    - name: Initialize Android Platform Framework
+    - name: Build Android App via Native Runners
+      env:
+        ANDROID_HOME: /usr/local/lib/android/sdk
       run: |
         cordova platform add android --save
         cordova plugin add cordova-plugin-camera --save
         cordova plugin add cordova-plugin-network-information --save
         cordova plugin add cordova-plugin-background-mode --save
         cordova plugin add cordova-plugin-appminimize --save
-
-    - name: Compile App Binary Bundle
-      run: cordova build android --release --no-telemetry
+        cordova build android --release --no-telemetry
 
     - name: Upload Finished APK
       uses: actions/upload-artifact@v4
