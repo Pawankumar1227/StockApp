@@ -14,31 +14,23 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    - name: Set up Java JDK 11
+    - name: Set up Java JDK
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
         java-version: '11'
 
-    - name: Set up Node.js 18
+    - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '16'
 
-    - name: Install Cordova CLI Globally
-      run: npm install -g cordova@12.0.0
+    - name: Install Cordova CLI
+      run: npm install -g cordova@11.1.0
 
-    - name: Prepare Clean Environment
+    - name: Run Build Process
       run: |
-        rm -rf platforms/
-        rm -rf plugins/
-
-    - name: Build Android App
-      env:
-        ANDROID_HOME: /usr/local/lib/android/sdk
-      run: |
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-        cordova platform add android@12.0.0 --save
+        cordova platform add android@10.1.2 --save
         cordova plugin add cordova-plugin-camera --save
         cordova plugin add cordova-plugin-network-information --save
         cordova plugin add cordova-plugin-background-mode --save
